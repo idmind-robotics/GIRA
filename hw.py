@@ -7,6 +7,7 @@ class HW:
     def __init__(self):
         self.fivevenablePin = machine.Pin(25, Pin.OUT)
         self.gpsneablePin = machine.Pin(26, Pin.OUT)
+        self.motorenablePin = machine.Pin(23, Pin.OUT)
         self.lockAPin = machine.Pin(19, Pin.OUT)
         self.lockBPin = machine.Pin(13, Pin.OUT)
         self.TSENSEPin = ADC(Pin(33))
@@ -21,7 +22,11 @@ class HW:
         self.buzzer = machine.PWM(machine.Pin(14), freq = 800, duty = 0)
         self.imu = imu.IMU()
         self.imu.setup_imu()
+        self.motorsOn = False
+        self.forceShutDown = False
         self.values={"OnDock":"", "ACCTilt":"", "ACCXX":"", "ACCYY":"", "ACCZZ":"", "VBat":"", "Temp":"", "IsLocked": ""}
+        self.turnOff()
+        self.motorenablePin.value(0)
     
     def beep(self, _time = 0.05):
         self.buzzer.duty(300)
@@ -60,6 +65,24 @@ class HW:
     def turnOffGps(self):
         self.gpsneablePin.value(0)
 
+    def turnOnMotors(self):
+        if self.forceShutDown:
+            return
+        self.motorenablePin.value(1)
+        self.motorsOn = True
+
+    def turnOffMotors(self):
+        if(self.motorsOn):
+            self.motorenablePin.value(0)
+        self.motorsOn = False
+    
+    def forceMotorShutdown(self):
+        self.forceShutDown = True
+        self.turnOffMotors()
+
+    def forceMotorOn(self):
+        self.forceShutDown = False
+
     def calcBattVoltage(self, sensorValue):
         return (9.66e-3*sensorValue+5.26)
 
@@ -67,6 +90,8 @@ class HW:
         return (9e-03*sensorValue+7.81)
 
     def read(self):
+        #for tests lets keep val at 24V
+        valor = 12
         self.TSENSE = self.TSENSEPin.read()
         self.VSENSE = self.VSENSEPin.read()
         self.ISENSE = self.ISENSEPin.read()
@@ -85,8 +110,17 @@ class HW:
         self.values["VCharger"] = self.calcChargerVoltage(self.chargersense)
         self.values["ACCXX"], self.values["ACCYY"], self.values["ACCZZ"] = self.imu.read()
         self.values["IsLocked"] = self.lockstatus
+        #CHECK IF WE'RE DOCKED SO WE TURN THE MOTORS OFF
         if self.values["VCharger"]  > 20:
             self.values["OnDock"] = 1
+            self.turnOffMotors()
         else:
             self.values["OnDock"] = 0
-        print(self.values)
+        #CHECK IF BAT VALUE IS LOW SO WE TURN THE MOTORS OFF
+        # print(self.values)
+        # print(self.values["VBat"], self.motorsOn, self.values["OnDock"])
+        if self.values["VBat"] < valor*.2:
+            self.turnOffMotors()
+        elif self.values["VBat"] > valor*.25 and not self.motorsOn and self.values["OnDock"] == 0:
+            self.turnOnMotors()
+        

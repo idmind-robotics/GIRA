@@ -90,14 +90,16 @@ class Modem(object):
         time.sleep(5)
         self.execute_at_command('pin')
         time.sleep(5)
+        self.uart.read()
         self.connect('net2.vodafone.pt', user='vodafone',pwd='vodafone')
         time.sleep(5)
+        self.uart.read()
         self.execute_at_command('setbusy')
         self.values["PhoneNumber"]=self.execute_at_command('phonenumber').split(',')[1].replace('\"', '')
         self.values['IPExtern']=self.get_ip_addr()
         self.values['IMEI'] = self.execute_at_command('imei')
+        self.execute_at_command('turngpson')
         
-
     #----------------------
     # Execute AT commands
     #----------------------
@@ -138,7 +140,8 @@ class Modem(object):
                     'pin':        {'string':'AT+CPIN=1379', 'timeout':3, 'end': 'OK'},
                     'turngpson':  {'string':'AT+CGPSPWR=1', 'timeout':3, 'end': 'OK'},
                     'gpsstatus':  {'string':'AT+CGPSSTATUS?', 'timeout':3, 'end': 'OK'},
-                    'gpsccord':   {'string':'AT+CGPSINF=2', 'timeout':3, 'end': 'OK'}
+                    'gpscoord':   {'string':'AT+CGNSINF', 'timeout':3, 'end': 'OK'},
+                    'gpstime':   {'string':'AT+CGPSINF=0', 'timeout':3, 'end': 'OK'}
         }
 
         # References:
@@ -174,9 +177,9 @@ class Modem(object):
         while True:
             line = self.uart.readline()
             if not line:
-                time.sleep(1)
+                time.sleep_ms(200)
                 empty_reads += 1
-                if empty_reads > timeout:
+                if empty_reads > timeout*5:
                     raise Exception('Timeout for command "{}" (timeout={})'.format(command, timeout))
                     #logger.warning('Timeout for command "{}" (timeout={})'.format(command, timeout))
                     #break
@@ -234,7 +237,6 @@ class Modem(object):
 
         # Return
         return output
-
 
     #----------------------
     #  Function commands
@@ -350,7 +352,6 @@ class Modem(object):
         if ip_addr:
             raise Exception('Error, we should be disconnected but we still have an IP address ({})'.format(ip_addr))
 
-
     def http_request(self, url, mode='GET', data=None, content_type='application/json'):
 
         # Protocol check.
@@ -432,3 +433,15 @@ class Modem(object):
         response = self.execute_at_command('gpsstatus')
         rsp = response.split(': ')
         self.values["GPSFix"] = rsp[1]
+
+    def getGpsData(self):
+        response = self.execute_at_command('gpscoord')
+        fields = response.split(': ')
+        gps_fields = fields[1].split(',')
+        if len(gps_fields) > 8:
+            self.values["DateandTime"] = gps_fields[2]
+            self.values["Latitude"] = gps_fields[3]
+            self.values["Longitude"] = gps_fields[4]
+            self.values["Altitude"] = gps_fields[5]
+            self.values["Speed"] = gps_fields[6]
+            self.values["Course"] = gps_fields[7]

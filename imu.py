@@ -78,12 +78,12 @@ class IMU:
             accel_z_h = self.i2c.readfrom_mem(DEVICE_ADDR, ZOUT_H_REGISTER, 1)
             accel_z_l = self.i2c.readfrom_mem(DEVICE_ADDR, ZOUT_L_REGISTER, 1)
             accel = self.i2c.readfrom(DEVICE_ADDR, XOUT_L_REGISTER, 8)
-            print(accel)
+            # print(accel)
             self.accel_x, self.accel_y, self.accel_z = self.parse_acceleration(accel)
-            print("X: %.3f | Y: %.3f | Z: %.3f" % (
-                self.accel_x,
-                self.accel_y,
-                self.accel_z))
+            # print("X: %.3f | Y: %.3f | Z: %.3f" % (
+            #     self.accel_x,
+            #     self.accel_y,
+            #     self.accel_z))
             return self.accel_x, self.accel_y, self.accel_z
     
     def loop(self):
