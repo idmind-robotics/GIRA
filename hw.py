@@ -10,12 +10,17 @@ class HW:
         self.motorenablePin = machine.Pin(23, Pin.OUT)
         self.lockAPin = machine.Pin(19, Pin.OUT)
         self.lockBPin = machine.Pin(13, Pin.OUT)
+        self.INT1Pin = machine.Pin(29, Pin.IN)
+        self.INT2Pin = machine.Pin(15, Pin.IN)
+        self.INT1Pin.irq(trigger=Pin.IRQ_RISING, handler=handle_interrupt_1)
+        self.INT2Pin.irq(trigger=Pin.IRQ_RISING, handler=handle_interrupt_2)
         self.TSENSEPin = ADC(Pin(33))
         self.ISENSEPin = ADC(Pin(34))
         self.VSENSEPin = ADC(Pin(35))
         self.VSENSEPin.atten(ADC.ATTN_11DB)
         self.chargersensePin = ADC(Pin(32))
         self.chargersensePin.atten(ADC.ATTN_11DB)
+        self.ISENSEPin.atten(ADC.ATTN_11DB)
         self.lockstatusPin = machine.Pin(16, Pin.IN)
         self.flagfivevoltsPin = machine.Pin(17, Pin.IN)
         self.flaggpsvoltsPin = machine.Pin(18, Pin.IN)
@@ -24,9 +29,15 @@ class HW:
         self.imu.setup_imu()
         self.motorsOn = False
         self.forceShutDown = False
-        self.values={"OnDock":"", "ACCTilt":"", "ACCXX":"", "ACCYY":"", "ACCZZ":"", "VBat":"", "Temp":"", "IsLocked": ""}
+        self.values={"OnDock":"", "ACCTilt":"", "ACCXX":"", "ACCYY":"", "ACCZZ":"", "VBat":"", "Temp":"", "IsLocked": "", "CBat": ""}
         self.turnOff()
         self.motorenablePin.value(0)
+    
+    def handle_interrupt_1(pin):
+        print("Interrupt1")
+    
+    def handle_interrupt_2(pin):
+        print("Interrupt1")
     
     def beep(self, _time = 0.05):
         self.buzzer.duty(300)
@@ -89,6 +100,9 @@ class HW:
     def calcChargerVoltage(self, sensorValue):
         return (9e-03*sensorValue+7.81)
 
+    def calcCurrent(self, sensorValue):
+        return (5.43e-03*sensorValue + 0.952)
+
     def read(self):
         #for tests lets keep val at 24V
         valor = 12
@@ -100,12 +114,13 @@ class HW:
         self.flagfivevolts = self.flagfivevoltsPin.value()
         self.flaggpsvolts = self.flaggpsvoltsPin.value()
         # print("TSENSE:", self.TSENSE)
-        # print("ISENSE:", self.ISENSE)
+        # print("ISENSE:", self.calcCurrent(self.ISENSE))
         # print("VSENSE:", self.VSENSE)
         # print("chargersense:", self.chargersense)
         # print("lockstatus:", self.lockstatus)
         # print("flagfivevolts:", self.flagfivevolts)
         # print("flaggpsvolts:", self.flaggpsvolts)
+        self.values["CBat"] = self.calcCurrent(self.ISENSE)
         self.values["VBat"] = self.calcBattVoltage(self.VSENSE)
         self.values["VCharger"] = self.calcChargerVoltage(self.chargersense)
         self.values["ACCXX"], self.values["ACCYY"], self.values["ACCZZ"] = self.imu.read()

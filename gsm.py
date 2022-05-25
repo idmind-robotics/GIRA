@@ -186,7 +186,7 @@ class Modem(object):
             else:
                 # Convert line to string
                 line_str = line.decode('utf-8')
-                # print('line_str "{}"'.format(line_str))
+                print('line_str "{}"'.format(line_str))
                 # Do we have an error?
                 if line_str == 'ERROR\r\n':
                     print('Got generic AT error')
@@ -358,8 +358,8 @@ class Modem(object):
         assert url.startswith('http'), 'Unable to handle communication protocol for URL "{}"'.format(url)
 
         # Are we  connected?
-        if not self.get_ip_addr():
-            raise Exception('Error, modem is not connected')
+        # if not self.get_ip_addr():
+            # raise Exception('Error, modem is not connected')
 
         # Close the http context if left open somehow
         # print('Close the http context if left open somehow...')
@@ -419,6 +419,7 @@ class Modem(object):
 
         # Third, get data
         # print('Http request step #4 (getdata)')
+        self.uart.read()
         response_content = self.execute_at_command('getdata', clean_output=False)
 
         # print(response_content)

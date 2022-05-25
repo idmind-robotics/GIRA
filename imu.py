@@ -21,6 +21,15 @@ ZOUT_L_REGISTER = 0x11
 ZOUT_H_REGISTER = 0x12
 
 MODE_WAKE = 0x01
+MOTION_CONTROL_REGISTER = 0x09
+INTERRUPT_ENABLE_REGISTER = 0x06
+INTERRUPT_MASK = 0b1000
+SHAKE_THRESHOLD_REGISTER_LSB = 0x46
+SHAKE_THRESHOLD_REGISTER_MSB = 0x47
+SHAKE_P2P_DURATION_AND_COUNT_REGISTER_LSB = 0x48
+SHAKE_P2P_DURATION_AND_COUNT_REGISTER_MSB = 0x49
+SHAKE_THRESHOLD = 300
+SHAKE_P2P_DURATION_AND_COUNT = 1 < 4 & 10
 
 class IMU:
     def __init__(self):
@@ -47,6 +56,13 @@ class IMU:
         device_status = self.i2c.readfrom(DEVICE_ADDR, DEVICE_STATUS_REGISTER, 1)
         is_wake = device_status[0] & 0b00000011
         print("Device is in %s mode" % ("WAKE" if is_wake else "STANDBY"))
+
+        self.i2c.writeto_mem(DEVICE_ADDR, MOTION_CONTROL_REGISTER, bytearray([ INTERRUPT_MASK ]))
+        self.i2c.writeto_mem(DEVICE_ADDR, INTERRUPT_ENABLE_REGISTER, bytearray([ INTERRUPT_MASK ]))
+        self.i2c.writeto_mem(DEVICE_ADDR, SHAKE_THRESHOLD_REGISTER_LSB, bytearray([ SHAKE_THRESHOLD & 0xff ]))
+        self.i2c.writeto_mem(DEVICE_ADDR, SHAKE_THRESHOLD_REGISTER_MSB, bytearray([ SHAKE_THRESHOLD >> 8 ]))
+        self.i2c.writeto_mem(DEVICE_ADDR, SHAKE_P2P_DURATION_AND_COUNT_REGISTER_LSB, bytearray([ SHAKE_P2P_DURATION_AND_COUNT & 0xff ]))
+        self.i2c.writeto_mem(DEVICE_ADDR, SHAKE_P2P_DURATION_AND_COUNT_REGISTER_MSB, bytearray([ SHAKE_P2P_DURATION_AND_COUNT >> 8 ]))
 
     def parse_acceleration(self, rawData):
         #{2g, 4g, 8g, 16g, 12g}

@@ -11,7 +11,9 @@ import json
 
 URL_BIKE_CONFIG="https://emel.city-platform.com/opendata/gira/bike/config"
 URL_BIKE_TOKEN="https://emel.city-platform.com/opendata/data/gira/token"
-URL_BIKE_API="https://emel.city-platform.com/opendata/data/gira/bike"
+URL_BIKE_API="https://emel.city-platform.com/opendata/gira/bike"
+#"http://idmind-webdev-server.herokuapp.com/api/gps"
+#
 URL_BIKE_ID="http://idmind-webdev-server.herokuapp.com/api/bike_registry"
 URL_BIKE_COMMANDS="http://idmind-webdev-server.herokuapp.com/api/command"
 
@@ -67,6 +69,7 @@ def hw_routine(t):
     CONTEXT["hw"].read()
 
 def comm_routine(t):
+    start = time.time()
     bike_commands = CONTEXT["modem"].http_request(URL_BIKE_COMMANDS, mode='POST', data="{}")
     bike_commands = json.loads(bike_commands.content)
     if bool(bike_commands):
@@ -80,14 +83,24 @@ def comm_routine(t):
             CONTEXT["lock"] = True
         if 'unlock' in bike_commands.keys() and bike_commands["unlock"]:
             CONTEXT["unlock"] = True
-    
+    end = time.time()
+    print(end - start)
+
+    start = time.time()
     CONTEXT["modem"].getGpsStatus()
     CONTEXT["modem"].getGpsData()
+    end = time.time()
+    print(end - start)
     final = {}
     final = CONTEXT["bike"].copy()
     final.update(CONTEXT["modem"].values)
+    final.update(CONTEXT["hw"].values)
     print(final)
-
+    start = time.time()
+    bike_commands = CONTEXT["modem"].http_request(URL_BIKE_API, mode='POST', data=json.dumps(final))
+    print(bike_commands.content)
+    end = time.time()
+    print(end - start)
 
 
 
