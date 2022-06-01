@@ -1,7 +1,8 @@
 import time
 from machine import Pin, ADC
 import machine
-import imu
+import json
+from src import imu
 
 class HW:
     def __init__(self):
@@ -21,10 +22,12 @@ class HW:
         self.chargersensePin = ADC(Pin(32))
         self.chargersensePin.atten(ADC.ATTN_11DB)
         self.ISENSEPin.atten(ADC.ATTN_11DB)
+        self.TSENSEPin.atten(ADC.ATTN_11DB)
         self.lockstatusPin = machine.Pin(16, Pin.IN)
         self.flagfivevoltsPin = machine.Pin(17, Pin.IN)
         self.flaggpsvoltsPin = machine.Pin(18, Pin.IN)
         self.buzzer = machine.PWM(machine.Pin(14), freq = 800, duty = 0)
+        self.buzzer.duty(0)
         self.imu = imu.IMU()
         self.imu.setup_imu()
         self.motorsOn = False
@@ -120,13 +123,14 @@ class HW:
         # print("lockstatus:", self.lockstatus)
         # print("flagfivevolts:", self.flagfivevolts)
         # print("flaggpsvolts:", self.flaggpsvolts)
+        self.values["Temp"] = self.TSENSE
         self.values["CBat"] = self.calcCurrent(self.ISENSE)
         self.values["VBat"] = self.calcBattVoltage(self.VSENSE)
         self.values["VCharger"] = self.calcChargerVoltage(self.chargersense)
         self.values["ACCXX"], self.values["ACCYY"], self.values["ACCZZ"] = self.imu.read()
         self.values["IsLocked"] = self.lockstatus
         #CHECK IF WE'RE DOCKED SO WE TURN THE MOTORS OFF
-        if self.values["VCharger"]  > 20:
+        if self.values["VBat"]  > 39.3:
             self.values["OnDock"] = 1
             self.turnOffMotors()
         else:
@@ -138,4 +142,5 @@ class HW:
             self.turnOffMotors()
         elif self.values["VBat"] > valor*.25 and not self.motorsOn and self.values["OnDock"] == 0:
             self.turnOnMotors()
+
         

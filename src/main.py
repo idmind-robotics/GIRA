@@ -4,9 +4,9 @@ from machine import Timer, SoftI2C
 from machine import Pin, ADC
 
 
-import imu
-import gsm
-import hw
+from src import imu
+from src import gsm
+from src import hw
 import json
 
 URL_BIKE_CONFIG="https://emel.city-platform.com/opendata/gira/bike/config"
@@ -18,48 +18,6 @@ URL_BIKE_ID="http://idmind-webdev-server.herokuapp.com/api/bike_registry"
 URL_BIKE_COMMANDS="http://idmind-webdev-server.herokuapp.com/api/command"
 
 
-try:
-  f = open('memory.txt')
-  text = f.read()
-  if text == 'autoreset':
-    localUpdate = False
-    os.remove('memory.txt')
-except Exception:
-  print("no file present, use button logic")
-
-
-# Configure Logger
-logger = lib.logger.config(enabled=True, include=env.settings['logInclude'], exclude=env.settings['logExclude'], time=t)
-log = logger(append='boot')
-log("The current time is %s" % t.human())
-
-loggerOta = logger(append='OTAUpdater')
-
-io = update.IO(os=os, logger=loggerOta)
-github = update.GitHub(
-  io=io,
-  remote=env.settings['githubRemote'],
-  branch=env.settings['githubRemoteBranch'],
-  logger=loggerOta,
-  requests=lib.requests,
-  username=env.settings['githubUsername'],
-  token=env.settings['githubToken'],
-  base64=base64,
-)
-
-updater = update.OTAUpdater(io=io, github=github, logger=loggerOta, machine=machine, localUpdate=localUpdate)
-
-try:
-  updater.update()
-except Exception as e:
-  log('Failed to OTA update:', e)
-
-try:
-  import src.main
-  src.main.start(env=env, requests=lib.requests, logger=logger, time=t, updater=updater)
-except Exception as e:
-  print("FAILED", e)
-  machine.reset()
 
 
 hw = hw.HW()
