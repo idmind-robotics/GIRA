@@ -33,6 +33,9 @@ modem.initialize()
 hw.beep()
 time.sleep(1)
 modem.setupGSM()
+hw.beep()
+hw.beep()
+
 time.sleep(5)
 #get initial bike config
 response = modem.http_request(URL_BIKE_ID, mode='POST', data=json.dumps({"IMEI":modem.values["IMEI"]}))
