@@ -35,6 +35,8 @@ class HW:
         self.values={"OnDock":"", "ACCTilt":"", "ACCXX":"", "ACCYY":"", "ACCZZ":"", "VBat":"", "Temp":"", "IsLocked": "", "CBat": ""}
         self.turnOff()
         self.motorenablePin.value(0)
+        self.lastBatVoltage = 0
+        self.lastBatVoltage = self.calcBattVoltage(self.VSENSEPin.read())
     
     # def handle_interrupt_1(pin):
     #     print("Interrupt1")
@@ -100,7 +102,16 @@ class HW:
         self.forceShutDown = False
 
     def calcBattVoltage(self, sensorValue):
-        return (9.66e-3*sensorValue+5.26)
+        voltage = -10.8 + 0.021*sensorValue + (-1.81e-6*sensorValue*sensorValue)
+        if voltage - self.lastBatVoltage > 0.3 and voltage > 39.5:
+            self.values["OnDock"] = 1
+            self.turnOffMotors()
+        elif self.lastBatVoltage - voltage > 0.3:
+            self.values["OnDock"] = 0
+
+        self.lastBatVoltage = voltage
+        return (voltage)
+        # return (9.74e-3*sensorValue+6.49)
 
     def calcChargerVoltage(self, sensorValue):
         return (9e-03*sensorValue+7.81)
@@ -132,11 +143,11 @@ class HW:
         self.values["ACCXX"], self.values["ACCYY"], self.values["ACCZZ"] = self.imu.read()
         self.values["IsLocked"] = self.lockstatus
         #CHECK IF WE'RE DOCKED SO WE TURN THE MOTORS OFF
-        if self.values["VBat"]  > 39.3:
-            self.values["OnDock"] = 1
-            self.turnOffMotors()
-        else:
-            self.values["OnDock"] = 0
+        # if self.values["VBat"]  > 39.3:
+        #     self.values["OnDock"] = 1
+        #     self.turnOffMotors()
+        # else:
+        #     self.values["OnDock"] = 0
         #CHECK IF BAT VALUE IS LOW SO WE TURN THE MOTORS OFF
         # print(self.values)
         # print(self.values["VBat"], self.motorsOn, self.values["OnDock"])
