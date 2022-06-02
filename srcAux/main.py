@@ -30,6 +30,7 @@ hw.turnOffMotors()
 
 modem=gsm.Modem(MODEM_TX_PIN=2, MODEM_RX_PIN=4)
 modem.initialize()
+hw.beep()
 time.sleep(1)
 modem.setupGSM()
 time.sleep(5)
