@@ -33,9 +33,8 @@ modem.initialize()
 hw.beep()
 time.sleep(1)
 modem.setupGSM()
-hw.beep()
-time.sleep_ms(10)
-hw.beep()
+hw.beep(_time = 3)
+
 
 time.sleep(5)
 #get initial bike config
