@@ -1,6 +1,7 @@
 # Imports
-import time
 import json
+import time
+
 
 class GenericATError(Exception):
     pass
@@ -22,7 +23,6 @@ class Modem(object):
         self.MODEM_POWER_ON_PIN = MODEM_POWER_ON_PIN
         self.MODEM_TX_PIN       = MODEM_TX_PIN
         self.MODEM_RX_PIN       = MODEM_RX_PIN
-
         # Uart
         self.uart = uart
 
@@ -31,14 +31,12 @@ class Modem(object):
         self.values = {"IMEI":"", "PhoneNumber":"", "IPExtern":"", "GSMSignal":"", "DateandTime":"", "Latitude":"", "Longitude":"",
                     "Altitude":"", "Speed":"", "Course":"", "GPSFix":""}
 
-
     #----------------------
     #  Modem initializer
     #----------------------
 
     def initialize(self):
-
-        print('Initializing modem...')
+        print("DEBUG: Initializing modem...")    
 
         if not self.uart:
             from machine import UART, Pin
@@ -62,6 +60,7 @@ class Modem(object):
             self.uart = UART(1, 9600, timeout=1000, rx=self.MODEM_TX_PIN, tx=self.MODEM_RX_PIN)
 
         # Test AT commands
+        time.sleep(0.5)
         retries = 0
         while True:
             try:
@@ -69,45 +68,69 @@ class Modem(object):
             except:
                 retries+=1
                 if retries < 3:
-                    print('Error in getting modem info, retrying.. (#{})'.format(retries))
-                    time.sleep(3)
+                    print('DEBUG: Error in getting modem info, retrying.. (#{})'.format(retries))
+                    time.sleep(1)
                 else:
                     raise
             else:
                 break
 
-        print('Ok, modem "{}" is ready and accepting commands'.format(self.modem_info))
-        self.uart.read()
+        print("DEBUG: Modem is ready")
         # Set initialized flag and support vars
         self.initialized = True
-        
         time.sleep(2)
+        self.uart.read()
         #Makes the gsm reject everycall so it doesn't interfere with the message response
         # # Check if SSL is supported
         self.ssl_available = self.execute_at_command('checkssl') == '+CIPSSL: (0-1)'
+        self.uart.read()
 
     def setupGSM(self):
-        time.sleep(5)
-        self.execute_at_command('pin')
-        time.sleep(5)
-        self.uart.read()
-        self.connect('net2.vodafone.pt', user='vodafone',pwd='vodafone')
-        time.sleep(5)
-        self.uart.read()
-        self.execute_at_command('setbusy')
-        self.values["PhoneNumber"]=self.execute_at_command('phonenumber').split(',')[1].replace('\"', '')
-        self.values['IPExtern']=self.get_ip_addr()
-        self.values['IMEI'] = self.execute_at_command('imei')
-        self.execute_at_command('turngpson')
-        self.execute_at_command('inithttp')
-        self.execute_at_command('sethttp')
-        self.execute_at_command('enablessl')
+        retries = 0
+        while True:
+            try:
+                time.sleep(0.5)
+                self.execute_at_command('pin')
+                time.sleep(0.5)
+                self.uart.read()
+                #isto vai ter de mudar se mudarmos de cartao
+                self.connect('net2.vodafone.pt', user='vodafone',pwd='vodafone')
+                time.sleep(0.5)
+                self.uart.read()
+                self.execute_at_command('setbusy')
+                time.sleep(0.5)
+                self.uart.read()
+                self.values["PhoneNumber"]=self.execute_at_command('phonenumber').split(',')[1].replace('\"', '')
+                time.sleep(0.5)
+                self.uart.read()
+                self.values['IPExtern']=self.get_ip_addr()
+                time.sleep(0.5)
+                self.uart.read()
+                self.values['IMEI'] = self.execute_at_command('imei')
+                time.sleep(0.5)
+                self.uart.read()
+                self.execute_at_command('turngpson')
+                time.sleep(0.5)
+                self.uart.read()
+                self.execute_at_command('inithttp')
+                time.sleep(0.5)
+                self.uart.read()
+                self.execute_at_command('sethttp')
+                time.sleep(0.5)
+                self.execute_at_command('enablessl')
+                break
+            except:
+                retries+=1
+                if retries < 3:
+                    print('DEBUG: Error in setting modem info, retrying.. (#{})'.format(retries))
+                    time.sleep(0.1)
+                else:
+                    raise
         
     #----------------------
     # Execute AT commands
     #----------------------
     def execute_at_command(self, command, data=None, clean_output=True):
-
         # Commands dictionary. Not the best approach ever, but works nicely.
         commands = {
                     'modeminfo':  {'string':'AT', 'timeout':3, 'end': 'OK'},
@@ -144,7 +167,8 @@ class Modem(object):
                     'turngpson':  {'string':'AT+CGPSPWR=1', 'timeout':3, 'end': 'OK'},
                     'gpsstatus':  {'string':'AT+CGPSSTATUS?', 'timeout':3, 'end': 'OK'},
                     'gpscoord':   {'string':'AT+CGNSINF', 'timeout':3, 'end': 'OK'},
-                    'gpstime':   {'string':'AT+CGPSINF=0', 'timeout':3, 'end': 'OK'}
+                    'gpstime':    {'string':'AT+CGPSINF=0', 'timeout':3, 'end': 'OK'},
+                    'keepalive':  {'string':'AT+SHAHEAD="Connection keep-alive"','timeout':3, 'end': 'OK'} 
         }
 
         # References:
@@ -180,19 +204,24 @@ class Modem(object):
         while True:
             line = self.uart.readline()
             if not line:
-                time.sleep_ms(200)
+                # await asyncio.sleep(1)
                 empty_reads += 1
-                if empty_reads > timeout*5:
+                if empty_reads > 5:
                     raise Exception('Timeout for command "{}" (timeout={})'.format(command, timeout))
                     #logger.warning('Timeout for command "{}" (timeout={})'.format(command, timeout))
                     #break
             else:
                 # Convert line to string
-                line_str = line.decode('utf-8')
-                # print('line_str "{}"'.format(line_str))
+                try:
+                    line_str = line.decode('utf-8')
+                    # print('line_str "{}"'.format(line_str))
+                except:
+                    line_str = ""
+                    # print("An exception occurred")
+                    pass
                 # Do we have an error?
                 if line_str == 'ERROR\r\n':
-                    print('Got generic AT error')
+                    # print('Got generic AT error')
                     break
                     # raise GenericATError('Got generic AT error')
 
@@ -238,7 +267,7 @@ class Modem(object):
 
         # print('Returning "{}"'.format(output.encode('utf8')))
 
-        # Return
+        # Retur
         return output
 
     #----------------------
@@ -331,13 +360,12 @@ class Modem(object):
         retries = 0
         max_retries = 5
         while True:
-            retries += 1
             ip_addr = self.get_ip_addr()
             if not ip_addr:
                 retries += 1
                 if retries > max_retries:
                     raise Exception('Cannot connect modem as could not get a valid IP address')
-                print('No valid IP address yet, retrying... (#')
+                print('DEBUG: No valid IP address yet, retrying... (#')
                 time.sleep(1)
             else:
                 break
@@ -452,6 +480,7 @@ class Modem(object):
     def getGpsStatus(self):
         response = self.execute_at_command('gpsstatus')
         rsp = response.split(': ')
+        print(rsp)
         self.values["GPSFix"] = rsp[1]
 
     def getGpsData(self):
