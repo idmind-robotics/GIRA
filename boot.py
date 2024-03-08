@@ -1,5 +1,6 @@
 '''
-Script to run once at boot. Checks a memory.txt file to know to update from GitHub or locally.
+Script to run once at boot. 
+TODO: Check a memory.txt file to know to update from GitHub using SIM connection.
 After checking for updates, starts up the main loop of the program "main.py".
 '''
 
