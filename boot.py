@@ -9,38 +9,7 @@ import network
 import sys
 sys.path.append('/src')
 machine.freq(240000000)
-
-reprogram = False
 t = lib.timew.Time(time=time)
-
-# Configure Logger
-logger = lib.logger.config(enabled=True, include=env.settings['logInclude'], exclude=env.settings['logExclude'], time=t)
-log = logger(append='boot')
-log("The current time is %s" % t.human())
-
-loggerOta = logger(append='OTAUpdater')
-
-# Configure OTA Updater
-io = update.IO(os=os, logger=loggerOta)
-github = update.GitHub(
-    io=io,
-    remote=env.settings['githubRemote'],
-    branch=env.settings['githubRemoteBranch'],
-    logger=loggerOta,
-    requests=lib.requests,
-    username=env.settings['githubUsername'],
-    token=env.settings['githubToken'],
-    base64=base64,
-)
-
-# Configure OTA Updater
-updater = update.OTAUpdater(io=io, github=github, logger=loggerOta, machine=machine, localUpdate = not reprogram)
-
-try:
-    # Check for updates
-    updater.update() # If reprogram is True, it will check GitHub repo. If not, it will just replace the src directory with the Aux directory (Why??)
-except Exception as e:
-    log('Failed to OTA update:', e)
 
 # This is done automatically - main.py (loop) is executed
 '''
