@@ -4,7 +4,7 @@ TODO: Check a memory.txt file to know to update from GitHub using SIM connection
 After checking for updates, starts up the main loop of the program "main.py".
 '''
 
-import update, machine, env, lib.requests, lib.logger, lib.requests, lib.timew, time, os
+import update, machine, lib.requests, lib.logger, lib.requests, lib.timew, time, os
 from lib import base64
 import network
 import sys
