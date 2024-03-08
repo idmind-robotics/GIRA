@@ -230,7 +230,9 @@ def hw_routine(t):
             CONTEXT["unlock"] = False
 
         hw.read(modem.values["DateandTime"])  # Updates Hardware readings and handles control (Voltages, IMU, etc...)
-        print(hw.values.update(modem.values))
+        toprint = hw.values
+        toprint.update(modem.values)
+        print(toprint)
     
     except Exception as e:
         # If there's an error in hardware, write it to a file and keep going
