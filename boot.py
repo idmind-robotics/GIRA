@@ -13,28 +13,6 @@ machine.freq(240000000)
 reprogram = False
 t = lib.timew.Time(time=time)
 
-try:
-  # Check if the memory.txt file exists: This file is created when a REPROGRAM command is received on the main loop
-  f = open('memory.txt')
-  text = f.read()
-
-  # If the file exists, check if it contains the word 'reprogram'
-  if text == 'reprogram': # If it does, connect to WIFI, delete the file and set the reprogram flag to True
-    # TODO Try to use the Modem internet connection for retrieving updates from GitHub 
-    wlan_ap = network.WLAN(network.AP_IF) # For setting up ESP as an AccessPoint
-    wlan_sta = network.WLAN(network.STA_IF) # For connecting ESP to a Router
-    wlan_sta.active(True)
-    print('Trying to connect to %s...' % env.settings['wifiAP']) 
-    if not wlan_sta.isconnected(): # If not connected
-        print('connecting to network...')
-        wlan_sta.connect(env.settings['wifiAP'], env.settings['wifiPassword']) # Connect ESP32 to WiFi 
-        while not wlan_sta.isconnected(): # Wait until connection is established
-            pass
-    reprogram = True
-    os.remove('memory.txt') # Delete the memory file so that it doesnt reprogram again next boot
-except Exception:
-  print("No memory file exists, no need to update")
-
 # Configure Logger
 logger = lib.logger.config(enabled=True, include=env.settings['logInclude'], exclude=env.settings['logExclude'], time=t)
 log = logger(append='boot')
