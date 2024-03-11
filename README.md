@@ -14,4 +14,4 @@
 
  "msgFreq.txt" : Saves information about how often to send data to the API as an int in seconds.
 
-"IDMINDGIRACONFIG.rar" : Zip file containing the CLI application developed for EMEL to interface with batteries for updating the bikes identification, test and debug different components.
+"IDMIND_GIRA_CONFIG.rar" : Zip file containing the CLI application developed for EMEL to interface with batteries for updating the bikes identification, test and debug different components.
