@@ -13,3 +13,5 @@
  "bike_id.txt" : Saves information about the bike's identification (RFID & Registry) as a JSON: {'BIKERFID': '1111X', 'BIKEREGISTRY': '1111X'}
 
  "msgFreq.txt" : Saves information about how often to send data to the API as an int in seconds.
+
+"IDMINDGIRACONFIG.rar" : Zip file containing the CLI application developed for EMEL to interface with batteries for updating the bikes identification, test and debug different components.
