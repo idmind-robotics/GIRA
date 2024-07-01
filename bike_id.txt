@@ -1,0 +1,1 @@
+{'BIKERFID': '0', 'BIKEREGISTRY': '0'}

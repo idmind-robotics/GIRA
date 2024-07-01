@@ -1,0 +1,1 @@
+{'URL_BIKE_CONFIG': 'https://emel.city-platform.com/opendata/gira/bike/config','URLAPI': 'https://emel.city-platform.com/opendata/gira/bike', 'APN': 'umts' , 'user': '', 'passwd': ''}
